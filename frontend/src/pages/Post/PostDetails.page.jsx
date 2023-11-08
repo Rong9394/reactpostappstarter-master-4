@@ -1,10 +1,11 @@
 import { Link, Navigate, useLoaderData } from "react-router-dom";
 import DOMAIN from "../../services/endpoint";
 import axios from "axios";
-import { Group, Button, Paper} from '@mantine/core';
+import { Group, Button, Paper, TextInput} from '@mantine/core';
 import classes from "./PostDetails.page.module.css"
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from '@mantine/form';
 
 function PostDetailsPage() {
   const currentPost = useLoaderData();
@@ -12,10 +13,19 @@ function PostDetailsPage() {
   const [isAuthor, setIsAuthor] = useState(currentPost.data.isAuthor);
   const [wantToUpdate, updateUi] = useState(false);
 
-  const [author, setAuthor] = useState(currentPost.data.author);
-  const [title, setTitle] = useState(currentPost.data.title);
-  const [category, setCategory] = useState(currentPost.data.category);
-  const [content, setContent] = useState(currentPost.data.content);
+  const form = useForm({
+    initialValues: {
+      author: currentPost.data.author,
+      title: currentPost.data.title,
+      category: currentPost.data.category,
+      image: currentPost.data.image,
+      content: currentPost.data.content,
+      id: currentPost.data.id,
+  }});
+
+
+    
+
 
   
   const handlePost = () => {
@@ -25,8 +35,15 @@ function PostDetailsPage() {
 
   const handleUpdate = async (e) => {
     navigate("/posts");
-
+    const res = await axios.post(`${DOMAIN}/api/posts`, e);
+    if (res?.data.success) {
+      navigate("/posts");
+    }
   };
+
+  const onExit = () => {
+    navigate("/posts");
+  }
 
   const viewUi = (<><Paper withBorder shadow="md" radius="md">
                       <h2>Author:</h2>
@@ -38,7 +55,7 @@ function PostDetailsPage() {
                     </Paper>
                     <Paper withBorder shadow="md" radius="md">
                       <h2>Category:</h2>
-                      <p  t size='lg'>{currentPost.data.category}</p>
+                      <p  size='lg'>{currentPost.data.category}</p>
                     </Paper>
                     <Paper withBorder shadow="md" radius="md">
                       <h2>Content:</h2>
@@ -49,34 +66,33 @@ function PostDetailsPage() {
                       <Button><Link to="/posts">Back to Posts</Link></Button>
                     </Group></>);
 
-  const editUi = (<form onSubmit={handleUpdate}>
-                    <Paper withBorder shadow="md" radius="md">
-                      <h2>Author:</h2>
-                      <textarea name="author" size='lg' onChange={(e)=>{setAuthor(e.target.value)}} value={author}/>
-                    </Paper>
-                    <Paper withBorder shadow="md" radius="md">
-                      <h2>Title:</h2>
-                      <textarea name="title" size='lg' onChange={(e)=>{setTitle(e.target.value)}} value={title}/>
-                    </Paper>
-                    <Paper withBorder shadow="md" radius="md">
-                      <h2>Category:</h2>
-                      <textarea type="text"  name="category" size='lg' onChange={(e)=>{setCategory(e.target.value)}} value={category}/>
-                    </Paper>
-                    <Paper withBorder shadow="md" radius="md">
-                      <h2>Content:</h2>
-                      <textarea type="text"  name="content" size='lg' onChange={(e)=>{setContent(e.target.value)}} value={content}/>
-                    </Paper>
-                    <Group position="right" mt="md">
-                      <Button type='submit'><Link>Update post</Link></Button>
-                      <Button><Link to="/posts">Back to Posts</Link></Button>
-                    </Group>
-                  </form>);
+  const editUi = (<form onSubmit={form.onSubmit(handleUpdate)}>
+                  <TextInput
+
+                    {...form.getInputProps("title")}
+                  />
+
+                  <TextInput
+                    {...form.getInputProps("category")}
+                  />
+                  <TextInput
+                    {...form.getInputProps("image")}
+                  />
+
+                  <TextInput
+
+                    {...form.getInputProps("content")}
+                  />
+                  <Group position="right" mt="md">
+                    {wantToUpdate? <Button type='submit'>Update post</Button> : null}
+                    <Button onClick={onExit}>Back to Posts</Button>
+                  </Group>
+</form>);
   return (
     <>
-      
       <div className={classes.outerLayer}>
         <div className={classes.container}>
-          {wantToUpdate? editUi : viewUi}
+          {wantToUpdate? editUi : viewUi}   
         </div>
         <div className={classes.container}>
           <img className={classes.image} src={currentPost.data.image}></img>

@@ -79,7 +79,14 @@ app.get("/api/posts/:id", (req, res) => {
 app.post("/api/posts", (req, res) => {
 
   const incomingPost = req.body;
-  console.log(incomingPost);
+  let isUpdate = false;
+  for(let i=0; i<posts.length; i++){
+    if(posts[i].id === incomingPost.id){
+      posts.splice(i, 1);
+      isUpdate = true;
+      break;
+    }
+  }
 
 
   const token = req.headers["authorization"]?.replace('Bearer ', '');
@@ -89,11 +96,20 @@ app.post("/api/posts", (req, res) => {
     const user = jwt.decode(token)?.id;
 
     if(user) {
-
       incomingPost.userId = user;
-      addPost(incomingPost);
+      if(isUpdate) {
+        posts.push(incomingPost);
+        // @ts-ignore
+        posts.sort((a,b)=>{
+          console.log(a.id>b.id)
+          return a.id>b.id? 1:-1;
+        });
+      } else {
+        addPost(incomingPost);
+      }
     }
   }
+  console.log(posts);
   res.status(200).json({ success: true });
 });
 
